@@ -175,6 +175,6 @@ def visualizar_red_con_mst(G, mst, titulo="Red eléctrica conectada con prim"):
 G_luz = obtener_subgrafo_luz(G)
 mst_luz = mst_prim(G_luz)
 
-# Ya que tenemos la ruta con el prim solo la resaltamos
+# Ya que tenemos la ruta con el prim solo la resaltamoss
 visualizar_red_con_mst(G, mst_luz)
 
