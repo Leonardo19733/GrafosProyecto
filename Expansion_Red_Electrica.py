@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import random
 import numpy as np
 from queue import PriorityQueue
+from matplotlib.widgets import Button
+
 
 G = nx.Graph()
 
@@ -40,7 +42,7 @@ def expandir_colonias(G, central, max_colonias=6):
     contador_colonias = 0
 
     for vecino in obtener_vecinos(central):
-        peso = random.randint(5, 15)
+        peso = random.randint(1, 15)
         pq.put((peso, central, vecino))
 
     while not pq.empty() and contador_colonias < max_colonias:
@@ -72,7 +74,7 @@ def obtener_vecinos(nodo):
 
 expandir_colonias(G, central)
 
-# Asignamos valores a lazar en los aristas de 5 - 20
+# Asignamos valores a lazar en los aristas de 2 - 15
 
 for i in range(n_filas):
     for j in range(n_columnas):
@@ -90,6 +92,7 @@ def visualizar_mapa_red(G, titulo="Red eléctrica - Mapeo inicial"):
     node_colors = [colores[G.nodes[n]['tipo']] for n in G.nodes]
 
     plt.figure(figsize=(10, 8))
+    plt.get_current_fig_manager().full_screen_toggle()
     nx.draw(G, pos, with_labels=True, node_color=node_colors, node_size=700, font_size=8)
 
     pesos = {(u, v): G[u][v]['peso'] for u, v in G.edges}
@@ -105,12 +108,21 @@ def visualizar_mapa_red(G, titulo="Red eléctrica - Mapeo inicial"):
         plt.scatter([], [], c=color, label=leyendas[tipo], edgecolors='black')
     
     plt.legend(scatterpoints=1, frameon=True, labelspacing=1, title="Leyenda")
-    plt.title(titulo)
     plt.axis('equal')
     plt.tight_layout()
+    plt.title(titulo)
+    
+    #Agregamos la wea del boton para mostrar el prim
+    ax_boton = plt.axes([0.80, 0.10, 0.15, 0.05])
+    boton = Button(ax_boton, 'Mostrar ruta Prim')
+
+    def cerrar(event):
+        plt.close()
+
+    boton.on_clicked(cerrar)
     plt.show()
 
-visualizar_mapa_red(G)
+visualizar_mapa_red(G, titulo="Generacion de los nodos")
 
 
 #--- Aqui empieza el codigo para el segundo mapeo de los nodos que se conecten con el metodo prim
@@ -139,6 +151,7 @@ def visualizar_red_con_mst(G, mst, titulo="Red eléctrica conectada con prim"):
             colores.append('lightgray')
     
     plt.figure(figsize=(12, 9))
+    plt.get_current_fig_manager().full_screen_toggle()  # Abrir en pantalla completa
     
     # Dibujar grafo completo con nodos y aristas normales
     nx.draw_networkx_nodes(G, pos, node_color=colores, node_size=700, edgecolors='black')
@@ -169,6 +182,15 @@ def visualizar_red_con_mst(G, mst, titulo="Red eléctrica conectada con prim"):
     plt.title(titulo)
     plt.axis('equal')
     plt.tight_layout()
+
+    ax_boton = plt.axes([0.80, 0.10, 0.15, 0.05])
+    boton = Button(ax_boton, 'Mostrar ruta Kruskal')
+
+    def cerrar(event):
+        plt.close()
+
+    boton.on_clicked(cerrar)
+
     plt.show()
 
 G_luz = obtener_subgrafo_luz(G)
@@ -204,9 +226,10 @@ def visualizar_kruskal_completo(G, mst, kruskal_final, titulo="Red eléctrica fi
         elif tipo == 'colonia':
             colores.append('green')
         else:
-            colores.append('lightgray')
+            colores.append('blue')
 
     plt.figure(figsize=(12, 9))
+    plt.get_current_fig_manager().full_screen_toggle()  # Abrir en pantalla completa
     nx.draw_networkx_nodes(G, pos, node_color=colores, node_size=700, edgecolors='black')
     nx.draw_networkx_labels(G, pos, font_size=8)
     nx.draw_networkx_edges(G, pos, alpha=0.3)
@@ -214,11 +237,11 @@ def visualizar_kruskal_completo(G, mst, kruskal_final, titulo="Red eléctrica fi
     nx.draw_networkx_edge_labels(G, pos, edge_labels=pesos, font_size=6)
 
     # Dejamos el resaltado del camino con prim
-    nx.draw_networkx_edges(mst, pos, edge_color='blue', width=3)
+    nx.draw_networkx_edges(mst, pos, edge_color='green', width=3)
 
     # Nuevas conexiones de kruskal final en rojo
     nuevas = [e for e in kruskal_final.edges if e not in mst.edges and (e[1], e[0]) not in mst.edges]
-    nx.draw_networkx_edges(kruskal_final, pos, edgelist=nuevas, edge_color='red', width=2)
+    nx.draw_networkx_edges(kruskal_final, pos, edgelist=nuevas, edge_color='blue', width=2)
 
     total_final = sum(G[u][v]['peso'] for u, v in kruskal_final.edges)
     print(f"Costo total de red expandida (Kruskal): {total_final}")
@@ -231,7 +254,7 @@ def visualizar_kruskal_completo(G, mst, kruskal_final, titulo="Red eléctrica fi
         'mst': 'Conexion Prim',
         'kruskal': f'Conexion Kruskal (Total: {total_final})'
     }
-    colores_leyenda = {'colonia': 'green', 'central': 'yellow', 'vacio': 'lightgray', 'mst': 'blue', 'kruskal': 'red'}
+    colores_leyenda = {'colonia': 'green', 'central': 'yellow', 'vacio': 'lightgray', 'mst': 'green', 'kruskal': 'blue'}
     for tipo, color in colores_leyenda.items():
         plt.scatter([], [], c=color, label=leyendas[tipo], edgecolors='black' if tipo not in ['mst', 'kruskal'] else 'none')
 
@@ -239,6 +262,15 @@ def visualizar_kruskal_completo(G, mst, kruskal_final, titulo="Red eléctrica fi
     plt.title(titulo)
     plt.axis('equal')
     plt.tight_layout()
+
+    ax_boton = plt.axes([0.80, 0.10, 0.15, 0.05])
+    boton = Button(ax_boton, 'Cerrar visualización')
+
+    def cerrar(event):
+        plt.close()
+
+    boton.on_clicked(cerrar)
+
     plt.show()
 
 red_final = kruskal_expandir_completo(G, mst_luz)
