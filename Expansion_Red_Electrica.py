@@ -1,5 +1,11 @@
-# Proyecto de red eléctrica: Primer mapeado con nodos conectados a la central eléctrica
+# Proyecto de red eléctrica: Mapeado con nodos conectados a la central eléctrica
 
+'''
+Colaboradores:
+Angel Leonardo Vaca Ojeda (23310142)
+Nestor Alejandro Beltran Rodriguez (22110124)
+Jorge Alexis Becerra Fernandez (22310340)
+'''
 
 #Primero importamos las librerias necesarias para representar el grafo
 #IMPORTANTE WACHOS primero descargar la libreria en la terminal -> !pip install networkx matplotlib
@@ -10,6 +16,8 @@ import random
 import numpy as np
 from queue import PriorityQueue
 from matplotlib.widgets import Button
+#agregue la libreria heap, nos va a ayudar a dar un menor valor a nodos padre priorizandolos
+import heapq
 
 
 G = nx.Graph()
@@ -74,7 +82,7 @@ def obtener_vecinos(nodo):
 
 expandir_colonias(G, central)
 
-# Asignamos valores a lazar en los aristas de 2 - 15
+# Ponemos valores de peso a lazar en los aristas de 2 - 15
 
 for i in range(n_filas):
     for j in range(n_columnas):
@@ -84,7 +92,7 @@ for i in range(n_filas):
                 peso = random.randint(2, 15)
                 G.add_edge(nodo_actual, vecino, peso=peso)
 
-#Definimos una funcion para poder usar network
+#Definimos una funcion para poder usar la libreria network
 
 def visualizar_mapa_red(G, titulo="Red eléctrica - Mapeo inicial"):
     pos = nx.get_node_attributes(G, 'pos')
@@ -132,9 +140,40 @@ def obtener_subgrafo_luz(G):
     nodos_con_luz = [n for n, attr in G.nodes(data=True) if attr['tipo'] in ['central', 'colonia']]
     return G.subgraph(nodos_con_luz).copy()
 
+# Este es el prim mejorado (lo extendi pa que lo estudien)
+
 def mst_prim(G_sub):
-    # Usamos networkx
-    mst = nx.minimum_spanning_tree(G_sub, algorithm='prim')
+    if len(G_sub.nodes) == 0:
+        return nx.Graph()
+    
+    nodo_inicio = None
+    for n in G_sub.nodes:
+        if G_sub.nodes[n]['tipo'] == 'central':
+            nodo_inicio = n
+            break
+    
+    mst = nx.Graph()
+    visitados = set([nodo_inicio])
+    aristas_disponibles = []
+    
+    # Inicializar con las aristas del nodo inicial
+    for vecino in G_sub.neighbors(nodo_inicio):
+        peso = G_sub[nodo_inicio][vecino]['peso']
+        heapq.heappush(aristas_disponibles, (peso, nodo_inicio, vecino))
+    
+    while aristas_disponibles:
+        peso, u, v = heapq.heappop(aristas_disponibles)
+        
+        if v not in visitados:
+            mst.add_edge(u, v, peso=peso)
+            visitados.add(v)
+            
+            # Agregar nuevas aristas al heap
+            for vecino in G_sub.neighbors(v):
+                if vecino not in visitados:
+                    nuevo_peso = G_sub[v][vecino]['peso']
+                    heapq.heappush(aristas_disponibles, (nuevo_peso, v, vecino))
+    
     return mst
 
 def visualizar_red_con_mst(G, mst, titulo="Red eléctrica conectada con prim"):
@@ -239,7 +278,7 @@ def visualizar_kruskal_completo(G, mst, kruskal_final, titulo="Red eléctrica fi
     # Dejamos el resaltado del camino con prim
     nx.draw_networkx_edges(mst, pos, edge_color='green', width=3)
 
-    # Nuevas conexiones de kruskal final en rojo
+    # Nuevas conexiones de kruskal final en azul
     nuevas = [e for e in kruskal_final.edges if e not in mst.edges and (e[1], e[0]) not in mst.edges]
     nx.draw_networkx_edges(kruskal_final, pos, edgelist=nuevas, edge_color='blue', width=2)
 
